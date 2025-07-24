@@ -1,0 +1,14 @@
+[Uint]
+Description=OMEN FAN CONTRAL
+After=sysinit.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=
+ExecReload=
+ExecStop=
+User=root   
+
+[Install]
+WantedBy=multi-user.target
