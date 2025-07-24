@@ -11,7 +11,8 @@ import click
 import tomlkit
 from click_aliases import ClickAliasedGroup
 
-os.environ['PATH'] += ":/home/ymc/dependency/omen-fan/"
+# 添加环境变量防止服务文件找不到对应文件
+# os.environ['PATH'] += ":/home/YOUR_USER_NAME/.../omen-fan/"
 
 ECIO_FILE = "/sys/kernel/debug/ec/ec0/io"
 IPC_FILE = "/tmp/omen-fand.PID"
