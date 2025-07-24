@@ -11,14 +11,24 @@ import click
 import tomlkit
 from click_aliases import ClickAliasedGroup
 
+os.environ['PATH'] += ":/home/ymc/dependency/omen-fan/"
 
 ECIO_FILE = "/sys/kernel/debug/ec/ec0/io"
 IPC_FILE = "/tmp/omen-fand.PID"
 DEVICE_FILE = "/sys/devices/virtual/dmi/id/product_name"
 CONFIG_FILE = "/etc/omen-fan/config.toml"
-BOOST_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/pwm1_enable")[0]
-FAN1_SPEED_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/fan1_input")[0]
-FAN2_SPEED_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/fan2_input")[0]
+try:
+    BOOST_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/pwm1_enable")[0]
+    FAN1_SPEED_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/fan1_input")[0]
+    FAN2_SPEED_FILE = glob.glob("/sys/devices/platform/hp-wmi/hwmon/*/fan2_input")[0]
+except Exception as e:
+    BOOST_FILE = None
+    FAN1_SPEED_FILE = None 
+    FAN2_SPEED_FILE = None
+    print("[ERROR] System unable loading hwmon module.\n")
+else:
+    print("[Success] Loading hwmon module complete\nBOOST_FILE:{}\nFAN1_SPEED_FILE:{}\nFAN2_SPEED_FILE:{}".format(
+        BOOST_FILE, FAN1_SPEED_FILE, FAN2_SPEED_FILE))
 
 FAN1_OFFSET = 52  # 0x34
 FAN2_OFFSET = 53  # 0x35
@@ -182,12 +192,13 @@ def bios_control_cli(arg):
 def boost_cli(arg):
     is_root()
     load_ec_module()
-    if arg is False:
-        with open(BOOST_FILE, "r+", encoding="utf-8") as file:
-            file.write("2")
-    elif arg is True:
-        with open(BOOST_FILE, "r+", encoding="utf-8") as file:
-            file.write("0")
+    if BOOST_FILE is not None:
+        if arg is False:
+            with open(BOOST_FILE, "r+", encoding="utf-8") as file:
+                file.write("2")
+        elif arg is True:
+            with open(BOOST_FILE, "r+", encoding="utf-8") as file:
+                file.write("0")
 
 
 @cli.command(
@@ -253,7 +264,7 @@ def service_cli(arg):
                 print(f"  omen-fan service is already running with PID:{ipc.read()}")
         else:
             bios_control(False)
-            subprocess.Popen("omen-fand")
+            subprocess.Popen("/home/ymc/dependency/omen-fan/omen-fand.py")
             print("  omen-fan service has been started")
 
     elif arg in ["stop", "0"]:
@@ -294,16 +305,25 @@ def info_cli():
                     print("  BIOS Control : Enabled")
         else:
             print("  BIOS Control : Unknown (Need root)")
+    if FAN1_SPEED_FILE is not None:
+        with open(FAN1_SPEED_FILE, "r", encoding="utf-8") as fan1:
+            print(f"  Fan 1 : {fan1.read().strip()} RPM")
+    else:
+        print("  Fan 1 : Not Found RPM")
+    
+    if FAN2_SPEED_FILE is not None:
+        with open(FAN2_SPEED_FILE, "r", encoding="utf-8") as fan2:
+            print(f"  Fan 2 : {fan2.read().strip()} RPM")
+    else:
+        print("  Fan 2 : Not Found RPM")
 
-    with open(FAN1_SPEED_FILE, "r", encoding="utf-8") as fan1:
-        print(f"  Fan 1 : {fan1.read().strip()} RPM")
-    with open(FAN2_SPEED_FILE, "r", encoding="utf-8") as fan2:
-        print(f"  Fan 2 : {fan2.read().strip()} RPM")
-
-    with open(BOOST_FILE, "r", encoding="utf-8") as boost:
-        if boost.read().strip() == "0":
-            print("\n  Fan Boost : Enabled")
-            print("  Fan speeds are now maxed. BIOS and User controls are ignored")
+    if BOOST_FILE is not None:
+        with open(BOOST_FILE, "r", encoding="utf-8") as boost:
+            if boost.read().strip() == "0":
+                print("\n  Fan Boost : Enabled")
+                print("  Fan speeds are now maxed. BIOS and User controls are ignored")
+    else:
+        print("  Fan Boost : Unaviliable")
 
 
 @cli.command(
