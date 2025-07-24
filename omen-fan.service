@@ -1,14 +1,15 @@
-[Uint]
-Description=OMEN FAN CONTRAL
-After=sysinit.target
+[Unit]
+Description=OMEN FAN CONTROL
+After=sysinit.target 
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=
-ExecReload=
-ExecStop=
-User=root   
+ExecStart=/home/YOU_USER_NAME/.../omen-fan/omen-fan.sh
+ExecReload=/home/YOU_USER_NAME/.../omen-fan/omen-fan.sh
+ExecStop=/home/YOU_USER_NAME/.../omen-fan/omen-fan-stop.sh
+User=root
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
